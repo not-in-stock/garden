@@ -106,6 +106,11 @@
   [x]
   (and (at-rule? x) (= (:identifier x) :media)))
 
+(defn at-container?
+  "True if `x` is a CSS `@container` rule."
+  [x]
+  (and (at-rule? x) (= (:identifier x) :container)))
+
 (defn at-supports?
   "True if `x` is a CSS `@supports` rule."
   [x]
