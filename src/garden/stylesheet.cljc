@@ -60,6 +60,12 @@
   (at-rule :media {:media-queries media-queries
                    :rules rules}))
 
+(defn at-container
+  "Create a CSS @media rule."
+  [container-queries & rules]
+  (at-rule :container {:container-queries container-queries
+                       :rules rules}))
+
 (defn at-supports [feature-queries & rules]
   "Create a CSS @supports rule."
   (at-rule :feature {:feature-queries feature-queries
