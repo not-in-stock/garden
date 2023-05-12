@@ -6,7 +6,7 @@
       :cljs [garden.types :as types :refer [CSSFunction CSSUnit]])
    [garden.color :as color]
    [garden.compiler :refer [compile-css expand render-css]]
-   [garden.stylesheet :refer (at-import at-media at-keyframes at-supports)])
+   [garden.stylesheet :refer (at-container at-import at-media at-keyframes at-supports)])
   #?(:clj
      (:import garden.types.CSSFunction
               garden.types.CSSUnit)))
@@ -59,6 +59,47 @@
     ;; there was a bug which incorrectly changed "0%" to "0", see https://github.com/noprompt/garden/issues/120
     (is (= "hsla(0, 0%, 0%, 0.0)" (render (color/hsla 0 0 0 0.0))))
     (is (= "a{color:hsla(0,0%,0%,0.0)}" (compile-helper [:a {:color (color/hsla 0 0 0 0.0)}])))))
+
+(deftest at-container-test
+  (let [flags {:pretty-print? false}]
+    (are [y x] (= (compile-css flags x) y)
+      "@container (width > 400px) {h1{a:b}}"
+      (at-container {:width "> 400px"}
+                    [:h1 {:a :b}])
+
+      "a{a:b}@container sidebar(width > 400px){a:hover{c:d}}"
+      (list [:a {:a "b"}
+             (at-container {:container :sidebar
+                            :width "> 400px"}
+                           [:&:hover {:c "d"}])])
+
+      "@container not(width < 400px) {h1{a:b}}"
+      (at-container {"width < 400px" false}
+                    [:h1 {:a :b}])
+
+      "@container not(width < 400px) {h1{a:b}}"
+      (at-container {{:width "< 400px"} false}
+                    [:h1 {:a :b}])
+
+      "@container (width > 400px) and (height > 400px) {h1{a:b}}"
+      (at-container {:width "> 400px"
+                     :height "> 400px"}
+                    [:h1 {:a :b}])
+
+      "@container (width > 400px) or (height > 400px) {h1{a:b}}"
+      (at-container {#{{:width "> 400px"} {:height "> 400px"}} true}
+                    [:h1 {:a :b}])
+
+      "@container (width > 400px) not (height > 400px) {h1{a:b}}"
+      (at-container {{:width "> 400px"} true
+                     {:height "> 400px"} false}
+                    [:h1 {:a :b}])
+
+      "@container (width > 400px) and (width < 800px) not (height > 400px) {h1{a:b}}"
+      (at-container {{:width "> 400px"} true
+                     {:width "< 800px"} true
+                     {:height "> 400px"} false}
+                    [:h1 {:a :b}]))))
 
 (deftest at-media-test
   (let [flags {:pretty-print? false}]
