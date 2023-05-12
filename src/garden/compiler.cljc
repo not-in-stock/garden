@@ -277,6 +277,30 @@
                             :rules rules})
       subqueries)))
 
+;; @container expansion
+
+
+(defn- expand-container-query-expression [expression]
+  (if-let [f (->> [:container-expressions :nesting-behavior]
+                  (get-in *flags*)
+                  (media-expression-behavior))]
+    (f expression *media-query-context*)
+    expression))
+
+(defmethod expand-at-rule :container
+  [{:keys [value]}]
+  (let [{:keys [container-queries rules]} value
+        container-queries (expand-container-query-expression container-queries)
+        xs (with-media-query-context container-queries
+             (doall (mapcat expand (expand rules))))
+        ;; Though container-queries may be nested, they may not be nested
+        ;; at compile time. Here we make sure this is the case.
+        [subqueries rules] (divide-vec util/at-media? xs)]
+    (cons
+     (CSSAtRule. :container {:container-queries container-queries
+                             :rules rules})
+     subqueries)))
+
 ;; ---------------------------------------------------------------------
 ;; Stylesheet expansion
 
