@@ -280,7 +280,6 @@
 
 ;; @container expansion
 
-
 (defn- expand-container-query-expression [expression]
   (if-let [f (->> [:container-expressions :nesting-behavior]
                   (get-in *flags*)
