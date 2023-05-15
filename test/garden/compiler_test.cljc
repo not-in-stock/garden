@@ -62,8 +62,8 @@
 
 (deftest at-container-test
   (let [flags {:pretty-print? false}]
-    (are [y x] (= (compile-css flags x) y)
-      "@container (width > 400px) {h1{a:b}}"
+    (are [y x] (= y (compile-css flags x))
+      "@container(width>400px){h1{a:b}}"
       (at-container {:width "> 400px"}
                     [:h1 {:a :b}])
 
