@@ -102,6 +102,7 @@
   (or (util/rule? x)
       (util/at-import? x)
       (util/at-media? x)
+      (util/at-container? x)
       (util/at-supports? x)
       (util/at-keyframes? x)))
 
