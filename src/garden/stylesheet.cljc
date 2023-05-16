@@ -63,8 +63,11 @@
 (defn at-container
   "Create a CSS @media rule."
   [container-queries & rules]
-  (at-rule :container {:container-queries container-queries
-                       :rules rules}))
+  (let [{:keys [container-name]} container-queries]
+    (at-rule :container
+             {:container-queries (dissoc container-queries :container-name)
+              :container-name container-name
+              :rules rules})))
 
 (defn at-supports [feature-queries & rules]
   "Create a CSS @supports rule."
