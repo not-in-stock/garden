@@ -1,11 +1,13 @@
 (ns garden.color-test
   (:refer-clojure :exclude [complement])
   (:require
-   #?(:cljs [cljs.test :as t :refer-macros [is are deftest testing]]
-      :clj  [clojure.test :as t :refer [is are deftest testing]])
-   [garden.color :as color])
+    #?(:cljs [cljs.test :as t :refer-macros [is are deftest testing]]
+       :clj  [clojure.test :as t :refer [is are deftest testing]])
+    [garden.color :as color])
   #?(:clj
-     (:import clojure.lang.ExceptionInfo)))
+     (:import
+       clojure.lang.ExceptionInfo)))
+
 
 (def hex-black "#000000")
 (def hex-red "#ff0000")
@@ -50,6 +52,7 @@
 (def hsla-blue (color/hsla 240 100 50 0.5))
 (def hsla-white (color/hsla 0 0 100 0.5))
 (def hsla-orange (color/hsla 530/19 100 940/17 0.5))
+
 
 (deftest color-conversion-test
   (testing "hex->rgb"
@@ -108,6 +111,7 @@
       (color/as-hex rgba-green) hexa-green
       (color/as-hex rgba-blue) hexa-blue
       (color/as-hex rgba-white) hexa-white)))
+
 
 (deftest color-math-test
   (testing "color+"
@@ -171,7 +175,8 @@
 
     #?(:clj
        (is (thrown? ArithmeticException
-                    (color/color-div (color/rgb 1 1 1) 0))))))
+             (color/color-div (color/rgb 1 1 1) 0))))))
+
 
 (deftest color-functions-test
   (testing "rotate-hue"
@@ -232,11 +237,13 @@
       (color/invert rgb-black)
       rgb-white)))
 
+
 (deftest color-from-name-test
   (testing "from-name"
     (is (identical? (color/from-name "aquamarine")
                     (color/from-name "aquamarine")))
     (is (thrown? ExceptionInfo (color/from-name "aqualung")))))
+
 
 (deftest scale-lightness-test []
   (testing "scale-lightness"
@@ -247,6 +254,7 @@
     (is (= 15 (-> (color/hsl 50 50 10) (color/scale-lightness   50) :lightness)))
     (is (=  5 (-> (color/hsl 50 50 10) (color/scale-lightness  -50) :lightness)))))
 
+
 (deftest scale-saturation-test []
   (testing "scale-lightness"
     (is (= 75 (-> (color/hsl 50 50 50) (color/scale-saturation   50) :saturation)))
@@ -256,10 +264,12 @@
     (is (= 15 (-> (color/hsl 50 10 50) (color/scale-saturation   50) :saturation)))
     (is (=  5 (-> (color/hsl 50 10 50) (color/scale-saturation  -50) :saturation)))))
 
+
 (deftest scale-alpha-test []
   (testing "scale-alpha"
     (is (= 0.75 (-> (color/hsla 180 50 50 0.50) (color/scale-alpha  50) :alpha)))
     (is (= 0.25 (-> (color/hsla 180 50 50 0.50) (color/scale-alpha -50) :alpha)))))
+
 
 (deftest hex-tests []
   (testing "decrown hex"
@@ -267,9 +277,11 @@
   (testing "expand-hex"
     (is (= "aabbcc" (#'garden.color/expand-hex "#abc")))))
 
+
 (deftest weighted-mix-test []
   (testing "weighted-mix basics"
     (is (= "#000000" (color/weighted-mix "#000" "#fff" 0)))))
+
 
 (deftest tetrad-test []
   (testing "tetrad basics"
@@ -282,6 +294,7 @@
       (is (= h2 10875/32)) (is (= s2 100N)) (is (= l2 3820/51))
       (is (= h3 7995/32))  (is (= s3 100N)) (is (= l3 3820/51))
       (is (= h4 2235/32))  (is (= s4 100N)) (is (= l4 3820/51)))))
+
 
 (deftest shades-test []
   (testing "shades basics"

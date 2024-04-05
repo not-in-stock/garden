@@ -1,68 +1,102 @@
 (ns garden.color
   (:refer-clojure :exclude [complement long])
   (:require
-   [clojure.string :as string]))
+    [clojure.string :as string]))
+
 
 ;; ---------------------------------------------------------------------
 ;; Color protocols
 
 (defprotocol IRGB
   "Return an instance of RGB from this."
+
   (-rgb [this]))
+
 
 (defprotocol IRGBA
   "Return and instance of RGBA from this."
+
   (-rgba [this]))
+
 
 (defprotocol IRed
   "Return the red channel value of this."
+
   (-red [this]))
+
 
 (defprotocol IGreen
   "Return the green channel value of this."
+
   (-green [this]))
+
 
 (defprotocol IBlue
   "Return the blue channel value of this."
+
   (-blue [this]))
+
 
 (defprotocol IHSL
   "Return an instance of HSL from this."
+
   (-hsl [this]))
+
 
 (defprotocol IHSLA
   "Return an instance of HSLA from this."
+
   (-hsla [this]))
+
 
 (defprotocol IHue
   "Return the hue value of this."
+
   (-hue [this]))
+
 
 (defprotocol ISaturation
   "Return the saturation value of this."
+
   (-saturation [this]))
+
 
 (defprotocol ILightness
   "Return the lightness value of this."
+
   (-lightness [this]))
+
 
 (defprotocol IAlpha
   "Return the alpha channel value of this."
+
   (-alpha [this]))
+
 
 ;; ---------------------------------------------------------------------
 ;; Color types
 
-(defrecord RGB [r g b])
-(defrecord RGBA [r g b a])
-(defrecord HSL [h s l])
-(defrecord HSLA [h s l a])
+(defrecord RGB
+  [r g b])
+
+
+(defrecord RGBA
+  [r g b a])
+
+
+(defrecord HSL
+  [h s l])
+
+
+(defrecord HSLA
+  [h s l a])
+
 
 ;; ---------------------------------------------------------------------
 ;; Color functions
 
 
-;;; RGB functions
+;; RGB functions
 
 (defn ^Number red
   "Return an integer (between 0 and 255) of the red channel of x. x must
@@ -71,12 +105,14 @@
   {:post [(number? %) (<= 0 % 255)]}
   (-red x))
 
+
 (defn ^Number green
   "Return an integer (between 0 and 255) of the green channel of x. x 
   must satisfy IGreen."
   [x]
   {:post [(number? %) (<= 0 % 255)]}
   (-green x))
+
 
 (defn ^Number blue
   "Return an integer (between 0 and 255) of the blue channel of x. x must
@@ -86,27 +122,31 @@
   (-blue x))
 
 
-;;; HSL functions
+;; HSL functions
 
 (defn ^Number hue
   [x]
   {:post [(number? %)]}
   (-hue x))
 
+
 (defn ^Number saturation
   [x]
   {:post [(number? %) (<= 0 % 100)]}
   (-saturation x))
+
 
 (defn ^Number lightness
   [x]
   {:post [(number? %) (<= 0 % 100)]}
   (-lightness x))
 
+
 (defn ^Number alpha
   [x]
   {:post [(number? %) (<= 0 % 1)]}
   (-alpha x))
+
 
 ;; ---------------------------------------------------------------------
 ;; Creation
@@ -120,6 +160,7 @@
     (-rgb x)
     (RGB. (red x) (green x) (blue x))))
 
+
 (defn ^RGBA rgba
   "Return an instance of RGBA. x must satisfy either IRGBA or all of
   IRed, IGreen, IBlue, and IAlpha."
@@ -129,7 +170,8 @@
     (-rgba x)
     (RGBA. (red x) (green x) (blue x) (lightness x))))
 
-(defn ^HSL hsl 
+
+(defn ^HSL hsl
   "Return an instance of HSL. x must satisfy either IHSL or all of
   IHue, ISaturation, and ILightness."
   [x]
@@ -137,6 +179,7 @@
   (if (satisfies? IHSL x)
     (-hsl x)
     (HSL. (hue x) (saturation x) (lightness x))))
+
 
 (defn ^HSL hsla
   "Return an instance of HSLA. x must satisfy either IHSLA or all of
@@ -146,6 +189,7 @@
   (if (satisfies? IHSLA x)
     (-hsla x)
     (HSLA. (hue x) (saturation x) (lightness x) (alpha x))))
+
 
 (defn ^String hex
   "Convert a color to string in hex format."
@@ -161,6 +205,7 @@
         b (f (.-b c))]
     (str "#" r g b)))
 
+
 (defn ^Long long
   "Convert a color to long. x must satisfy IRGB."
   [x]
@@ -174,6 +219,7 @@
               (bit-shift-left g 8)
               b))))
 
+
 ;; ---------------------------------------------------------------------
 ;; Conversion
 
@@ -183,33 +229,34 @@
   (let [mn (min r g b)
         mx (max r g b)
         h (cond
-           (= mn mx)
-           0
+            (= mn mx)
+            0
 
-           (= r mx)
-           (* 60 (/ (- g b)
-                    (- mx mn)))
+            (= r mx)
+            (* 60 (/ (- g b)
+                     (- mx mn)))
 
-           (= g mx)
-           (* 60 (+ 2 (/ (- b r)
-                         (- mx mn))))
+            (= g mx)
+            (* 60 (+ 2 (/ (- b r)
+                          (- mx mn))))
 
-           :else
-           (* 60 (+ 4 (/ (- r g)
-                         (- mx mn)))))
+            :else
+            (* 60 (+ 4 (/ (- r g)
+                          (- mx mn)))))
         l (/ (+ mn mx) 510)
         s (cond
-           (= mn mx)
-           0
+            (= mn mx)
+            0
 
-           (< l 0.5)
-           (/ (- mx mn)
-              (+ mx mn))
+            (< l 0.5)
+            (/ (- mx mn)
+               (+ mx mn))
 
-           :else
-           (/ (- mx mn)
-              (- 510 mx mn)))]
+            :else
+            (/ (- mx mn)
+               (- 510 mx mn)))]
     (HSL. (mod (float h) 360) (* 100.0 s) (* 100.0 l))))
+
 
 (defn ^RGB hsl->rgb
   "Return and instance of RGB from hue, saturation, and lightness values."
@@ -225,16 +272,17 @@
         m (- l (/ c 2.0))
         [r' g' b']
         (cond
-         (<= 0 h 59)    [c x 0]
-         (<= 60 h 119)  [x c 0]
-         (<= 120 h 179) [0 c x]
-         (<= 180 h 239) [0 x c]
-         (<= 240 h 299) [x 0 c]
-         (<= 300 h 359) [c 0 x])
+          (<= 0 h 59)    [c x 0]
+          (<= 60 h 119)  [x c 0]
+          (<= 120 h 179) [0 c x]
+          (<= 180 h 239) [0 x c]
+          (<= 240 h 299) [x 0 c]
+          (<= 300 h 359) [c 0 x])
         r (Math/round (* 0xff (+ r' m)))
         g (Math/round (* 0xff (+ g' m)))
         b (Math/round (* 0xff (+ b' m)))]
     (RGB. r g b)))
+
 
 ;; ---------------------------------------------------------------------
 ;; Utilities
@@ -244,25 +292,30 @@
   [color degrees]
   (update-in (hsla color) [:h] (fn [h] (mod (+ h degrees) 360))))
 
+
 (defn ^HSLA saturate
   "Increase the saturation value of a given color by amount."
   [color amount]
   (update-in (hsla color) [:s] (fn [s] (min (+ s amount) 100))))
+
 
 (defn ^HSLA desaturate
   "Decrease the saturation value of a given color by amount."
   [color amount]
   (update-in (hsla color) [:s] (fn [s] (max 0 (- s amount)))))
 
+
 (defn ^HSLA lighten
   "Increase the lightness value a given color by amount."
   [color amount]
   (update-in (hsla color) [:l] (fn [l] (min (+ l amount) 100))))
 
+
 (defn ^HSLA darken
   "Decrease the saturation value of a given color by amount."
   [color amount]
   (update-in (hsla color) [:l] (fn [l] (max 0 (- l amount)))))
+
 
 (defn ^RGBA invert
   "Return the inversion of a color."
@@ -273,17 +326,19 @@
            (- 255 (.-b c))
            (.-a c))))
 
+
 (defn ^RGBA mix
   "Mix two or more colors by averaging their RGBA channels."
   ([color-1 color-2]
-     (let [c1 (rgba color-1)
-           c2 (rgba color-2)]
-       (merge-with
-        (fn [l r]
-          (/ (+ l r) 2.0))
-        c1 c2)))
+   (let [c1 (rgba color-1)
+         c2 (rgba color-2)]
+     (merge-with
+       (fn [l r]
+         (/ (+ l r) 2.0))
+       c1 c2)))
   ([color-1 color-2 & more]
-     (reduce mix (mix color-1 color-2) more)))
+   (reduce mix (mix color-1 color-2) more)))
+
 
 (defn hue-rotations
   [color & amounts]
@@ -291,29 +346,33 @@
          (rotate-hue color amount))
        amounts))
 
+
 (defn complement
   "Return the complement of a color."
   [color]
   (rotate-hue color 180))
 
+
 (defn split-complement
   "Given a color return a triple of the color and the two colors on
   either side of it's complement."
   ([color]
-     (split-complement color 130))
+   (split-complement color 130))
   ([color distance-from-complement]
-     (let [d (max 1 (min 179 distance-from-complement))]
-       (hue-rotations color 0 d (- d)))))
+   (let [d (max 1 (min 179 distance-from-complement))]
+     (hue-rotations color 0 d (- d)))))
+
 
 (defn analogous
   "Given a color return a triple of colors which are 0, 30, and 60
   degrees clockwise from it. If a second falsy argument is passed the
   returned values will be in a counter-clockwise direction."
   ([color]
-     (analogous color true))
+   (analogous color true))
   ([color clockwise?]
-     (let [sign (if clockwise? + -)]
-       (hue-rotations color 0 (sign 30) (sign 60)))))
+   (let [sign (if clockwise? + -)]
+     (hue-rotations color 0 (sign 30) (sign 60)))))
+
 
 (defn triad
   "Given a color return a triple of colors which are equidistance apart
@@ -321,82 +380,85 @@
   [color]
   (hue-rotations color 0 120 240))
 
+
 (defn tetrad
   "Given a color return a quadruple of four colors which are
   equidistance on the color wheel (ie. a pair of complements). An
   optional angle may be given for color of the second complement in the
   pair (this defaults to 90 when only color is passed)."
   ([color]
-     (tetrad color 90))
+   (tetrad color 90))
   ([color angle]
-     (let [degrees (max 1 (min 90 (Math/abs (float angle))))
-           color' (rotate-hue color degrees)]
-       [(rotate-hue color 0)
-        (complement color)
-        color'
-        (complement color')])))
+   (let [degrees (max 1 (min 90 (Math/abs (float angle))))
+         color' (rotate-hue color degrees)]
+     [(rotate-hue color 0)
+      (complement color)
+      color'
+      (complement color')])))
+
 
 (defn shades
   "Given a color return a list of shades from lightest to darkest by
   a step. By default the step is 10. White and black are excluded from
   the returned list."
   ([color]
-     (shades color 10))
+   (shades color 10))
   ([color step]
-     (let [c (hsl color)]
-       (for [i (range 1 (Math/floor (/ 100.0 step)))]
-         (assoc c :l (* i step))))))
+   (let [c (hsl color)]
+     (for [i (range 1 (Math/floor (/ 100.0 step)))]
+       (assoc c :l (* i step))))))
 
 
 ;; ---------------------------------------------------------------------
 ;; Implementation
 
 
-;;; Color types
+;; Color types
 
 (extend-type RGB
-   IRGB
-   (-rgb [this] this)
+  IRGB
+  (-rgb [this] this)
 
-   IRGBA
-   (-rgba [this]
-     (RGBA. (.-r this) (.-g this) (.-b this) 1.0))
+  IRGBA
+  (-rgba [this]
+    (RGBA. (.-r this) (.-g this) (.-b this) 1.0))
 
-   IHSL
-   (-hsl [this]
-     (rgb->hsl (.-r this) (.-g this) (.-b this)))
+  IHSL
+  (-hsl [this]
+    (rgb->hsl (.-r this) (.-g this) (.-b this)))
 
-   IHSLA
-   (-hsla [this]
-     (let [hsl ^HSL (-hsl this)]
-       (HSLA. (.-h hsl) (.-s hsl) (.-l hsl) 1.0)))
+  IHSLA
+  (-hsla [this]
+    (let [hsl ^HSL (-hsl this)]
+      (HSLA. (.-h hsl) (.-s hsl) (.-l hsl) 1.0)))
 
-   IRed
-   (-red [this]
-     (.-r this))
+  IRed
+  (-red [this]
+    (.-r this))
 
-   IGreen
-   (-green [this]
-     (.-g this))
+  IGreen
+  (-green [this]
+    (.-g this))
 
-   IBlue
-   (-blue [this]
-     (.-b this))
+  IBlue
+  (-blue [this]
+    (.-b this))
 
-   IAlpha
-   (-alpha [_] 1.0)
+  IAlpha
+  (-alpha [_] 1.0)
 
-   IHue
-   (-hue [this]
-     (.-h ^HSL (-hsl this)))
+  IHue
+  (-hue [this]
+    (.-h ^HSL (-hsl this)))
 
-   ISaturation
-   (-saturation [this]
-     (.-s ^HSL (-hsl this)))
+  ISaturation
+  (-saturation [this]
+    (.-s ^HSL (-hsl this)))
 
-   ILightness
-   (-lightness [this]
-     (.-l ^HSL (-hsl this))))
+  ILightness
+  (-lightness [this]
+    (.-l ^HSL (-hsl this))))
+
 
 (extend-type RGBA
   IRGB
@@ -406,7 +468,7 @@
   IRGBA
   (-rgba [this] this)
 
-  
+
   IHSL
   (-hsl [this]
     (rgb->hsl (.-r this) (.-g this) (.-b this)))
@@ -442,7 +504,8 @@
 
   ILightness
   (-lightness [this]
-    (.-l ^HSL (-hsl this)))) 
+    (.-l ^HSL (-hsl this))))
+
 
 (extend-type HSL
   IHSL
@@ -487,6 +550,7 @@
   ILightness
   (-lightness [this]
     (.-l this)))
+
 
 (extend-type HSLA
   IHSL
@@ -534,7 +598,7 @@
     (.-l this)))
 
 
-;;; Numbers
+;; Numbers
 
 (extend-type Long
   IRGB
@@ -579,6 +643,7 @@
   ILightness
   (-lightness [l]
     (lightness (hsl l))))
+
 
 (extend-type Integer
   IRGB
@@ -627,12 +692,13 @@
     (lightness (hsl i))))
 
 
-;;; String
+;; String
 
 (def ^:private hex-re
   "Regex for matching a hex color with optional leading
   \"#\". Captures the hex value."
   #"#?((?:[\da-fA-F]{3}){1,2})")
+
 
 (let [;; RGB channel range (0 - 255)
       c "\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*"
@@ -658,6 +724,7 @@
   argument."
     #"hsla\(\s*(\d+)\s*,\s*([0-9]|[1-9][0-9]|100)\s*,\s*([0-9](?:\.[0-9])?|[1-9][0-9](?:\.[0-9]+)?|100)%?\s*,\s*(0?(?:\.[0-9]+)?|1(?:\.0)?)\s*\)"))
 
+
 (defn ^RGB hex-str->rgb
   "Convert a CSS hex value to instance of RGB."
   [^String s]
@@ -672,6 +739,7 @@
                     {:given s
                      :expected `(~'re-matches ~hex-re ~s)}))))
 
+
 (defn ^RGB rgb-str->rgb
   "Convert a CSS rgb value to an instance of RGB."
   [^String s]
@@ -681,6 +749,7 @@
     (throw (ex-info (str "Invalid rgb string: " (pr-str s))
                     {:given s
                      :expected `(~'re-matches ~rgb-re ~s)}))))
+
 
 (defn ^RGBA rgba-str->rgba
   "Convert a CSS rgba value to an instance of RGBA."
@@ -693,6 +762,7 @@
                     {:given s
                      :expected `(~'re-matches ~rgba-re ~s)}))))
 
+
 (defn ^HSL hsl-str->hsl
   "Convert a CSS hsl value to an instance of HSL."
   [^String s]
@@ -703,6 +773,7 @@
     (throw (ex-info (str "Invalid hsl string: " (pr-str s))
                     {:given s
                      :expected `(~'re-matches ~hsl-re ~s)}))))
+
 
 (defn ^HSLA hsla-str->hsla
   "Convert a CSS hsla value to an instance of HSLA."
@@ -716,8 +787,8 @@
                     {:given s
                      :expected `(~'re-matches ~hsla-re ~s)}))))
 
-(def
-  ^{:doc "Convert a CSS color name to hex."}
+
+(def ^{:doc "Convert a CSS color name to hex."}
   color-name->hex
   {"aliceblue" "#f0f8ff"
    "antiquewhite" "#faebd7"
@@ -866,38 +937,40 @@
    "yellow" "#ffff00"
    "yellowgreen" "#9acd32"})
 
+
 (defn str->color
   "Attempt to parse a color from a string."
   [^String s]
   (cond
-   (re-matches hex-re s)
-   (hex-str->rgb s)
+    (re-matches hex-re s)
+    (hex-str->rgb s)
 
-   (re-matches rgb-re s)
-   (rgb-str->rgb s)
+    (re-matches rgb-re s)
+    (rgb-str->rgb s)
 
-   (re-matches rgba-re s)
-   (rgba-str->rgba s)
+    (re-matches rgba-re s)
+    (rgba-str->rgba s)
 
-   (re-matches hsl-re s)
-   (hsl-str->hsl s)
+    (re-matches hsl-re s)
+    (hsl-str->hsl s)
 
-   (re-matches hsla-re s)
-   (hsla-str->hsla s)
+    (re-matches hsla-re s)
+    (hsla-str->hsla s)
 
-   :else
-   (if-let [h (-> (string/lower-case s)
-                  (string/replace #"[^a-z]" "")
-                  (color-name->hex))]
-     (rgb h)
-     (throw (ex-info (str "Unable to convert " (pr-str s) " to a color")
-                     {:given s
-                      :expected `(~'or (~'re-matches ~hex-re ~s)
-                                       (~'re-matches ~rgb-re ~s)
-                                       (~'re-matches ~rgba-re ~s)
-                                       (~'re-matches ~hsl-re ~s)
-                                       (~'re-matches ~hsla-re ~s)
-                                       (~'color-name->hex ~s))})))))
+    :else
+    (if-let [h (-> (string/lower-case s)
+                   (string/replace #"[^a-z]" "")
+                   (color-name->hex))]
+      (rgb h)
+      (throw (ex-info (str "Unable to convert " (pr-str s) " to a color")
+                      {:given s
+                       :expected `(~'or (~'re-matches ~hex-re ~s)
+                                        (~'re-matches ~rgb-re ~s)
+                                        (~'re-matches ~rgba-re ~s)
+                                        (~'re-matches ~hsl-re ~s)
+                                        (~'re-matches ~hsla-re ~s)
+                                        (~'color-name->hex ~s))})))))
+
 
 (extend-type String
   IRGB
@@ -944,7 +1017,8 @@
   (-alpha [s]
     (.-a ^RGBA (-rgba s))))
 
-;;; Keyword
+
+;; Keyword
 
 ;; TODO: Error messages here will appear in the String
 ;; implementation. This is potentially confusing.
@@ -993,7 +1067,8 @@
   (-lightness [k]
     (-lightness (-hsl k))))
 
-;;; Vector
+
+;; Vector
 
 (defn bound
   "Return function which takes a number and returns it if (<= a n b),
@@ -1004,18 +1079,18 @@
       (min b (max n a))
       (min a (max n b)))))
 
-(def
-  ^{:arglists '([n])}
+
+(def ^{:arglists '([n])}
   rgb-bounded
   (bound 0 255))
 
-(def
-  ^{:arglists '([n])}
+
+(def ^{:arglists '([n])}
   sl-bounded
   (bound 0 100))
 
-(def
-  ^{:arglists '([n])}
+
+(def ^{:arglists '([n])}
   alpha-bounded
   (bound 0 1))
 

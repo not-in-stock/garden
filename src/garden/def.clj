@@ -1,19 +1,25 @@
 (ns garden.def
-  (:require [garden.types]
-            [garden.util :as util]
-            [garden.core])
-  (:import garden.types.CSSFunction
-           garden.types.CSSAtRule))
+  (:require
+    [garden.core]
+    [garden.types]
+    [garden.util :as util])
+  (:import
+    (garden.types
+      CSSAtRule
+      CSSFunction)))
+
 
 (defmacro defstyles
   "Convenience macro equivalent to `(def name (list styles*))`."
   [name & styles]
   `(def ~name (list ~@styles)))
 
+
 (defmacro defstylesheet
   "Convenience macro equivalent to `(def name (css opts? styles*))`."
   [name & styles]
   `(def ~name (garden.core/css ~@styles)))
+
 
 (defmacro defrule
   "Define a function for creating rules. If only the `name` argument is
@@ -40,6 +46,7 @@
         [_ sym spec] (macroexpand `(defn ~sym [~'& ~'children]
                                      (into ~rule ~'children)))]
     `(def ~sym ~spec)))
+
 
 (defmacro ^{:arglists '([name] [name docstring? & fn-tail])}
   defcssfn
@@ -83,16 +90,17 @@
       (css (attr :end-of-quote :string :inherit))
       ;; => \"attr(end-of-quote string, inherit)\""
   ([sym]
-     (let [[_ sym fn-tail] (macroexpand
-                            `(defn ~sym [& ~'args]
-                               (CSSFunction. ~(str sym) ~'args)))]
-       `(def ~sym ~fn-tail)))
+   (let [[_ sym fn-tail] (macroexpand
+                           `(defn ~sym [& ~'args]
+                              (CSSFunction. ~(str sym) ~'args)))]
+     `(def ~sym ~fn-tail)))
   ([sym & fn-tail]
-     (let [[_ sym [_ & fn-spec]] (macroexpand `(defn ~sym ~@fn-tail))
-           cssfn-name (str sym)]
-       `(def ~sym
-          (fn [& args#]
-            (CSSFunction. ~cssfn-name (apply (fn ~@fn-spec) args#)))))))
+   (let [[_ sym [_ & fn-spec]] (macroexpand `(defn ~sym ~@fn-tail))
+         cssfn-name (str sym)]
+     `(def ~sym
+        (fn [& args#]
+          (CSSFunction. ~cssfn-name (apply (fn ~@fn-spec) args#)))))))
+
 
 (defmacro defkeyframes
   "Define a CSS @keyframes animation.

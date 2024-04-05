@@ -1,6 +1,7 @@
 (ns garden.media
   "Utility functions for working with media queries.")
 
+
 ;; See: http://www.w3.org/TR/css3-mediaqueries/#media1
 (def media-features
   #{:all

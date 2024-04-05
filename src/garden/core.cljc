@@ -1,6 +1,8 @@
 (ns garden.core
   "Convert Clojure data structures to CSS."
-  (:require [garden.compiler :as compiler]))
+  (:require
+    [garden.compiler :as compiler]))
+
 
 (defn ^String css
   "Convert a variable number of Clojure data structure to a string of
@@ -8,6 +10,7 @@
   {:arglists '([rules] [flags? rules])}
   [& rules]
   (apply compiler/compile-css rules))
+
 
 (defn ^String style
   "Convert a variable number of maps into a string of CSS for use with

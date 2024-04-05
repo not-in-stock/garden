@@ -1,13 +1,17 @@
 (ns garden.stylesheet
   "Utility functions for CSS properties, directives and functions."
-  (:require [garden.util :as util]
-            [garden.color :as color]
-            [garden.types :as t])
+  (:require
+    [garden.color :as color]
+    [garden.types :as t]
+    [garden.util :as util])
   #?(:clj
-      (:import garden.types.CSSFunction
-               garden.types.CSSAtRule)))
+     (:import
+       (garden.types
+         CSSAtRule
+         CSSFunction))))
 
-;;;; ## Stylesheet helpers
+
+;; ## Stylesheet helpers
 
 (defn rule
   "Create a rule function for the given selector. The `selector`
@@ -27,38 +31,46 @@
               (string? selector)
               (symbol? selector))
     (throw (ex-info
-            "Selector must be either a keyword, string, or symbol." {}))
+             "Selector must be either a keyword, string, or symbol." {}))
     (fn [& children]
       (into (apply vector selector more) children))))
 
-(defn cssfn [fn-name]
+
+(defn cssfn
+  [fn-name]
   (fn [& args]
     (t/CSSFunction. fn-name args)))
 
-;;;; ## At-rules
 
-(defn- at-rule [identifier value]
+;; ## At-rules
+
+(defn- at-rule
+  [identifier value]
   (t/CSSAtRule. identifier value))
+
 
 (defn at-font-face
   "Create a CSS @font-face rule."
   [& font-properties]
   ["@font-face" font-properties])
 
+
 (defn at-import
   "Create a CSS @import rule."
   ([url]
-     (at-rule :import {:url url
-                       :media-queries nil}))
+   (at-rule :import {:url url
+                     :media-queries nil}))
   ([url & media-queries]
-     (at-rule :import {:url url
-                       :media-queries media-queries})))
+   (at-rule :import {:url url
+                     :media-queries media-queries})))
+
 
 (defn at-media
   "Create a CSS @media rule."
   [media-queries & rules]
   (at-rule :media {:media-queries media-queries
                    :rules rules}))
+
 
 (defn at-container
   "Create a CSS @media rule."
@@ -69,10 +81,13 @@
               :container-name container-name
               :rules rules})))
 
-(defn at-supports [feature-queries & rules]
+
+(defn at-supports
+  [feature-queries & rules]
   "Create a CSS @supports rule."
   (at-rule :feature {:feature-queries feature-queries
                      :rules rules}))
+
 
 (defn at-keyframes
   "Create a CSS @keyframes rule."
@@ -80,12 +95,14 @@
   (at-rule :keyframes {:identifier identifier
                        :frames frames}))
 
-;;;; ## Functions
+
+;; ## Functions
 
 (defn rgb
   "Create a color from RGB values."
   [r g b]
   (color/rgb [r g b]))
+
 
 (defn hsl
   "Create a color from HSL values."

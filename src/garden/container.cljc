@@ -1,6 +1,7 @@
 (ns garden.container
   "Utility functions for working with container queries.")
 
+
 (def condition-descriptors
   #{:aspect-ratio
     :block-size

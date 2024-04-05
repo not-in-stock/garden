@@ -1,29 +1,34 @@
 (ns garden.compiler
   "Functions for compiling Clojure data structures to CSS."
   (:require
-   [clojure.string :as string]
-   #?(:clj  [garden.color :as color]
-      :cljs [garden.color :as color :refer [CSSColor]])
-   [garden.compression :as compression]
-   [garden.selectors :as selectors]
-   [garden.units :as units]
-   [garden.util :as util]
-   #?(:cljs
-      [garden.types :refer [CSSUnit CSSFunction CSSAtRule]]))
+    [clojure.string :as string]
+    #?(:clj  [garden.color :as color]
+       :cljs [garden.color :as color :refer [CSSColor]])
+    [garden.compression :as compression]
+    [garden.selectors :as selectors]
+    #?(:cljs
+       [garden.types :refer [CSSUnit CSSFunction CSSAtRule]])
+    [garden.units :as units]
+    [garden.util :as util])
   #?(:cljs
      (:require-macros
-      [garden.compiler :refer [with-media-query-context with-selector-context]]))
+       [garden.compiler :refer [with-media-query-context with-selector-context]]))
   #?(:clj
-     (:import (garden.types CSSUnit CSSFunction CSSAtRule)
-              (garden.color CSSColor))))
+     (:import
+       (garden.color
+         CSSColor)
+       (garden.types
+         CSSAtRule
+         CSSFunction
+         CSSUnit))))
+
 
 ;; ---------------------------------------------------------------------
 ;; Compiler flags
 
-(def
-  ^{:dynamic true
-    :private true
-    :doc "The current compiler flags."}
+(def ^{:dynamic true
+       :private true
+       :doc "The current compiler flags."}
   *flags*
   {;; When set to `true` the compiled stylesheet will be "pretty
    ;; printed." This would be equivalent to setting
@@ -48,9 +53,9 @@
                        ;; parent's.
                        :nesting-behavior :default}})
 
-(def
-  ^{:private true
-    :doc "Retun a function to call when rendering a media expression.
+
+(def ^{:private true
+       :doc "Retun a function to call when rendering a media expression.
   The returned function accepts two arguments: the media
   expression being evaluated and the current media expression context.
   Both arguments are maps. This is used to provide semantics for nested
@@ -59,17 +64,20 @@
   {:merge (fn [expr context] (merge context expr))
    :default (fn [expr _] expr)})
 
-(def
-  ^{:dynamic true
-    :private true
-    :doc "The current parent selector context."}
-  *selector-context* nil)
 
-(def
-  ^{:dynamic true
-    :private true
-    :doc "The current media query context."}
-  *media-query-context* nil)
+(def ^{:dynamic true
+       :private true
+       :doc "The current parent selector context."}
+  *selector-context*
+  nil)
+
+
+(def ^{:dynamic true
+       :private true
+       :doc "The current media query context."}
+  *media-query-context*
+  nil)
+
 
 ;; ---------------------------------------------------------------------
 ;; Utilities
@@ -79,26 +87,32 @@
   `(binding [*selector-context* ~selector-context]
      (do ~@body)))
 
+
 (defmacro with-media-query-context
   [selector-context & body]
   `(binding [*media-query-context* ~selector-context]
      (do ~@body)))
+
 
 (defn- vendors
   "Return the current list of browser vendors specified in `*flags*`."
   []
   (seq (:vendors *flags*)))
 
+
 (defn- auto-prefixed-properties
   "Return the current list of auto-prefixed properties specified in `*flags*`."
   []
   (set (map name (:auto-prefix *flags*))))
 
+
 (defn- auto-prefix?
   [property]
   (contains? (auto-prefixed-properties) property))
 
-(defn- top-level-expression? [x]
+
+(defn- top-level-expression?
+  [x]
   (or (util/rule? x)
       (util/at-import? x)
       (util/at-media? x)
@@ -106,16 +120,19 @@
       (util/at-supports? x)
       (util/at-keyframes? x)))
 
+
 (defn- divide-vec
   "Return a vector of [(filter pred coll) (remove pred coll)]."
   [pred coll]
   ((juxt filter remove) pred coll))
+
 
 #?(:clj
    (defn- save-stylesheet
      "Save a stylesheet to disk."
      [path stylesheet]
      (spit path stylesheet)))
+
 
 ;; =====================================================================
 ;; Expansion
@@ -130,8 +147,11 @@
 ;; All data types that implement `IExpandable` should produce a list.
 
 (defprotocol IExpandable
-  (expand [this]
+
+  (expand
+    [this]
     "Return a list containing the expanded form of `this`."))
+
 
 ;; ---------------------------------------------------------------------
 ;; List expansion
@@ -140,11 +160,12 @@
   "Like flatten but only affects seqs."
   [coll]
   (mapcat
-   (fn [x]
-     (if (seq? x)
-       (expand-seqs x)
-       (list x)))
-   coll))
+    (fn [x]
+      (if (seq? x)
+        (expand-seqs x)
+        (list x)))
+    coll))
+
 
 ;; ---------------------------------------------------------------------
 ;; Declaration expansion
@@ -154,16 +175,17 @@
   {:pre [(map? declaration)]}
   (let [prefix #(util/as-str %1 "-" %2)]
     (reduce
-     (fn [m [k v]]
-       (if (util/hash-map? v)
-         (reduce
-          (fn [m1 [k1 v1]]
-            (assoc m1 (prefix k k1) v1))
-          m
-          (expand-declaration-1 v))
-         (assoc m (util/to-str k) v)))
-     (empty declaration)
-     declaration)))
+      (fn [m [k v]]
+        (if (util/hash-map? v)
+          (reduce
+            (fn [m1 [k1 v1]]
+              (assoc m1 (prefix k k1) v1))
+            m
+            (expand-declaration-1 v))
+          (assoc m (util/to-str k) v)))
+      (empty declaration)
+      declaration)))
+
 
 (defn- expand-declaration
   [declaration]
@@ -171,15 +193,16 @@
     declaration
     (with-meta (expand-declaration-1 declaration) (meta declaration))))
 
+
 ;; ---------------------------------------------------------------------
 ;; Rule expansion
 
-(def
-  ^{:private true
-    :doc "Matches a single \"&\" or \"&\" follow by one or more
+(def ^{:private true
+       :doc "Matches a single \"&\" or \"&\" follow by one or more
   non-whitespace characters."}
   parent-selector-re
   #"^&(?:\S+)?$")
+
 
 (defn- extract-reference
   "Extract the selector portion of a parent selector reference."
@@ -188,6 +211,7 @@
                             (util/to-str)
                             (re-find parent-selector-re))]
     (apply str (rest reference))))
+
 
 (defn- expand-selector-reference
   [selector]
@@ -199,13 +223,16 @@
                   (list))))
     selector))
 
-(defn- expand-selector [selector parent]
+
+(defn- expand-selector
+  [selector parent]
   (let [selector (map selectors/css-selector selector)
         selector (if (seq parent)
                    (->> (util/cartesian-product parent selector)
                         (map flatten))
                    (map list selector))]
     (map expand-selector-reference selector)))
+
 
 (defn- expand-rule
   [rule]
@@ -222,14 +249,17 @@
          (conj [selector])
          (conj ys))))
 
+
 ;; ---------------------------------------------------------------------
 ;; At-rule expansion
 
 (defmulti ^:private expand-at-rule :identifier)
 
+
 (defmethod expand-at-rule :default
   [at-rule]
   (list at-rule))
+
 
 ;; @keyframes expansion
 
@@ -243,14 +273,17 @@
          (CSSAtRule. :keyframes)
          (list))))
 
+
 ;; @media expansion
 
-(defn- expand-media-query-expression [expression]
+(defn- expand-media-query-expression
+  [expression]
   (if-let [f (->> [:media-expressions :nesting-behavior]
                   (get-in *flags*)
                   (media-expression-behavior))]
     (f expression *media-query-context*)
     expression))
+
 
 (defmethod expand-at-rule :media
   [{:keys [value]}]
@@ -261,9 +294,10 @@
         ;; at compile time. Here we make sure this is the case.
         [subqueries rules] (divide-vec util/at-media? xs)]
     (cons
-     (CSSAtRule. :media {:media-queries media-queries
-                         :rules rules})
-     subqueries)))
+      (CSSAtRule. :media {:media-queries media-queries
+                          :rules rules})
+      subqueries)))
+
 
 (defmethod expand-at-rule :feature
   [{:keys [value]}]
@@ -278,14 +312,17 @@
                             :rules rules})
       subqueries)))
 
+
 ;; @container expansion
 
-(defn- expand-container-query-expression [expression]
+(defn- expand-container-query-expression
+  [expression]
   (if-let [f (->> [:container-expressions :nesting-behavior]
                   (get-in *flags*)
                   (media-expression-behavior))]
     (f expression *media-query-context*)
     expression))
+
 
 (defmethod expand-at-rule :container
   [{:keys [value]}]
@@ -297,17 +334,20 @@
         ;; at compile time. Here we make sure this is the case.
         [subqueries rules] (divide-vec util/at-media? xs)]
     (cons
-     (CSSAtRule. :container {:container-queries container-queries
-                             :rules rules})
-     subqueries)))
+      (CSSAtRule. :container {:container-queries container-queries
+                              :rules rules})
+      subqueries)))
+
 
 ;; ---------------------------------------------------------------------
 ;; Stylesheet expansion
 
-(defn- expand-stylesheet [xs]
+(defn- expand-stylesheet
+  [xs]
   (->> (expand xs)
        (map expand)
        (apply concat)))
+
 
 (extend-protocol IExpandable
 
@@ -319,7 +359,7 @@
   #?(:cljs (expand [this] (expand-seqs this)))
 
   #?(:cljs RSeq)
-  #?(:cljs(expand [this] (expand-seqs this)))
+  #?(:cljs (expand [this] (expand-seqs this)))
 
   #?(:cljs NodeSeq)
   #?(:cljs (expand [this] (expand-seqs this)))
@@ -328,8 +368,7 @@
   #?(:cljs (expand [this] (expand-seqs this)))
 
   #?(:cljs Cons)
-  #?(:cljs (
-            expand [this] (expand-seqs this)))
+  #?(:cljs (expand [this] (expand-seqs this)))
 
   #?(:cljs ChunkedCons)
   #?(:cljs (expand [this] (expand-seqs this)))
@@ -382,12 +421,16 @@
   nil
   (expand [this] nil))
 
+
 ;; ---------------------------------------------------------------------
 ;; Rendering
 
 (defprotocol CSSRenderer
-  (render-css [this]
+
+  (render-css
+    [this]
     "Convert a Clojure data type in to a string of CSS."))
+
 
 ;; ---------------------------------------------------------------------
 ;; Punctuation
@@ -402,12 +445,14 @@
 (def ^:private rule-sep "\n\n")
 (def ^:private indent "  ")
 
+
 (defn- space-separated-list
   "Return a space separated list of values."
   ([xs]
    (space-separated-list render-css xs))
   ([f xs]
    (string/join " " (map f xs))))
+
 
 (defn- comma-separated-list
   "Return a comma separated list of values. Subsequences are joined with
@@ -421,12 +466,14 @@
                 (f x)))]
      (string/join comma ys))))
 
-(defn- rule-join [xs]
+
+(defn- rule-join
+  [xs]
   (string/join rule-sep xs))
 
-(def
-  ^{:private true
-    :doc "Match the start of a line if the characters immediately
+
+(def ^{:private true
+       :doc "Match the start of a line if the characters immediately
   after it are spaces or used in a CSS id (#), class (.), or tag name."}
   indent-loc-re
   #?(:clj
@@ -434,11 +481,14 @@
   #?(:cljs
      (js/RegExp. "(?=[ A-Za-z#.}-]+)^" "gm")))
 
-(defn- indent-str [s]
+
+(defn- indent-str
+  [s]
   #?(:clj
      (string/replace s indent-loc-re indent))
   #?(:cljs
      (.replace s indent-loc-re indent)))
+
 
 ;; ---------------------------------------------------------------------
 ;; Declaration rendering
@@ -446,9 +496,11 @@
 (defn- render-value
   "Render the value portion of a declaration."
   [x]
+  (prn "render-value" (:identifier x) (util/at-container? x) x)
   (if (util/at-keyframes? x)
     (util/to-str (get-in x [:value :identifier]))
     (render-css x)))
+
 
 (defn- render-property-and-value
   [[prop val]]
@@ -462,11 +514,13 @@
                 (render-value val))]
       (util/as-str prop colon val semicolon))))
 
+
 (defn- add-blocks
   "For each block in `declaration`, add sequence of blocks
    returned from calling `f` on the block."
   [f declaration]
   (mapcat #(cons % (f %)) declaration))
+
 
 (defn- prefixed-blocks
   "Sequence of blocks with their properties prefixed by
@@ -475,22 +529,25 @@
   (for [vendor vendors]
     [(util/vendor-prefix vendor (name p)) v]))
 
+
 (defn- prefix-all-properties
   "Add prefixes to all blocks in `declaration` using
    vendor prefixes in `vendors`."
   [vendors declaration]
   (add-blocks (partial prefixed-blocks vendors) declaration))
 
+
 (defn- prefix-auto-properties
   "Add prefixes to all blocks in `declaration` when property
    is in the `:auto-prefix` set."
   [vendors declaration]
   (add-blocks
-   (fn [block]
-     (let [[p _] block]
-       (when (auto-prefix? (name p))
-         (prefixed-blocks vendors block))))
-   declaration))
+    (fn [block]
+      (let [[p _] block]
+        (when (auto-prefix? (name p))
+          (prefixed-blocks vendors block))))
+    declaration))
+
 
 (defn- prefix-declaration
   "Prefix properties within a `declaration` if `{:prefix true}` is
@@ -502,11 +559,13 @@
                     prefix-auto-properties)]
     (prefix-fn vendors declaration)))
 
+
 (defn- render-declaration
   [declaration]
   (->> (prefix-declaration declaration)
        (map render-property-and-value)
        (string/join "\n")))
+
 
 ;; ---------------------------------------------------------------------
 ;; Rule rendering
@@ -514,6 +573,7 @@
 (defn- render-selector
   [selector]
   (comma-separated-list selector))
+
 
 (defn- render-rule
   "Convert a vector to a CSS rule string. The vector is expected to be
@@ -526,6 +586,7 @@
               (string/join "\n")
               (indent-str))
          r-brace)))
+
 
 ;; ---------------------------------------------------------------------
 ;; Media query rendering
@@ -542,6 +603,7 @@
               (str "(" sk colon sv ")")
               (str "(" sk ")")))))
 
+
 (defn- render-media-expr
   "Make a media query expession from one or more maps. Keys are not
   validated but values have the following semantics:
@@ -556,6 +618,35 @@
     (->> (map render-media-expr-part expr)
          (string/join " and "))))
 
+
+(defn- render-container-expr-part
+  "Render the individual components of a media expression."
+  [[k v]]
+  (let [[sk sv] (map render-value [k v])]
+    (cond (true? v) sk
+          (false? v) (str "not " sk)
+          (= "only" sv) (str "only " sk)
+          :else (if (and v (seq sv))
+                  (str "(" sk colon sv ")")
+                  (str "(" sk ")")))))
+
+
+(defn- render-container-expr
+  "Make a media query expession from one or more maps. Keys are not
+  validated but values have the following semantics:
+
+    `true`  as in `{:screen true}`  == \"screen\"
+    `false` as in `{:screen false}` == \"not screen\"
+    `:only` as in `{:screen :only}  == \"only screen\""
+  [expr]
+  (prn "render-container-expr" "sequential?" (sequential? expr))
+  (if (sequential? expr)
+    (->> (map render-container-expr expr)
+         (comma-separated-list))
+    (->> (map render-container-expr-part expr)
+         (string/join " and "))))
+
+
 ;; ---------------------------------------------------------------------
 ;; Feature query rendering
 
@@ -567,6 +658,7 @@
     (if (and v (seq sv))
       (str "(" sk colon sv ")")
       (str "(" sk ")"))))
+
 
 (defn- render-feature-expr
   "Make a query expression from one or more maps. Keys are not
@@ -591,10 +683,11 @@
                                   (float magnitude)
                                   magnitude)
                       int-magnitude (int non-ratio)]
-                  (if (and (float? non-ratio) (== non-ratio int-magnitude)) ;; workaround for https://github.com/yui/yuicompressor/issues/108
+                  (if (and (float? non-ratio) (== non-ratio int-magnitude)) ; workaround for https://github.com/yui/yuicompressor/issues/108
                     int-magnitude
                     non-ratio)))]
     (str magnitude (name unit))))
+
 
 (defn- render-function
   "Render a CSS function."
@@ -605,12 +698,15 @@
                (util/to-str args))]
     (util/format "%s(%s)" (util/to-str f) args)))
 
-(defn ^:private render-color [c]
+
+(defn ^:private render-color
+  [c]
   (if-let [a (:alpha c)]
     (let [{:keys [hue saturation lightness]} (color/as-hsl c)
           [s l] (map units/percent [saturation lightness])]
       (util/format "hsla(%s)" (comma-separated-list [hue s l a])))
     (color/as-hex c)))
+
 
 ;; ---------------------------------------------------------------------
 ;; At-rule rendering
@@ -619,7 +715,9 @@
   "Render a CSS at-rule"
   :identifier)
 
+
 (defmethod render-at-rule :default [_] nil)
+
 
 ;; @import
 
@@ -634,6 +732,7 @@
     (str "@import "
          (if queries (str url " " queries) url)
          semicolon)))
+
 
 ;; @keyframes
 
@@ -654,6 +753,7 @@
              (map #(str % body))
              (rule-join))))))
 
+
 ;; @media
 
 (defmethod render-at-rule :media
@@ -668,6 +768,26 @@
                (indent-str))
            r-brace-1))))
 
+
+;; @container
+
+(defmethod render-at-rule :container
+  [{:keys [value]}]
+  ;; (prn :container value)
+  (let [{:keys [container-queries container-name rules]} value]
+    (when (seq rules)
+      (cond-> ["@container"]
+        (some? container-queries) (conj (str " " container-name)))
+      (str "@container"
+           container-name
+           (render-container-expr container-queries)
+           l-brace-1
+           (-> (map render-css rules)
+               (rule-join)
+               (indent-str))
+           r-brace-1))))
+
+
 ;; @supports
 
 (defmethod render-at-rule :feature
@@ -681,6 +801,7 @@
                (rule-join)
                (indent-str))
            r-brace-1))))
+
 
 ;; ---------------------------------------------------------------------
 ;; CSSRenderer implementation
@@ -784,6 +905,7 @@
        (render-css)
        (first)))
 
+
 (defn- do-compile
   "Return a string of CSS."
   [flags rules]
@@ -794,6 +916,7 @@
          (remove nil?)
          (rule-join))))
 
+
 (defn- do-preamble
   "Prefix stylesheet with files in preamble. Not available in
   ClojureScript."
@@ -803,6 +926,7 @@
   #?(:cljs
      stylesheet))
 
+
 (defn- do-compression
   "Compress CSS if the pretty-print(?) flag is true."
   [{:keys [pretty-print? pretty-print]} stylesheet]
@@ -810,6 +934,7 @@
   (if (or pretty-print? pretty-print)
     stylesheet
     (compression/compress-stylesheet stylesheet)))
+
 
 (defn- do-output-to
   "Write contents of stylesheet to disk."
@@ -819,6 +944,7 @@
        (save-stylesheet output-to stylesheet)
        (println "Wrote:" output-to)))
   stylesheet)
+
 
 (defn compile-css
   "Convert any number of Clojure data structures to CSS."

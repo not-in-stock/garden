@@ -1,8 +1,13 @@
 (ns garden.compression
   "Stylesheet compression utilities."
   #?(:clj
-     (:import (java.io StringReader StringWriter)
-              (com.yahoo.platform.yui.compressor CssCompressor))))
+     (:import
+       (com.yahoo.platform.yui.compressor
+         CssCompressor)
+       (java.io
+         StringReader
+         StringWriter))))
+
 
 ;; ---------------------------------------------------------------------
 ;; Clojure
@@ -30,6 +35,7 @@
         (-> (str writer)
             (.replaceAll "0__YUIHACK__%" "0%"))))))
 
+
 ;; ---------------------------------------------------------------------
 ;; ClojureScript
 
@@ -47,6 +53,7 @@
           :chunk chunk
           :size (count chunk)}))))
 
+
 #?(:cljs
    (defn- tokenizer
      "Given an arbitrary number of [tag regex] pairs, return a function
@@ -58,28 +65,29 @@
        (fn [s]
          (some #(% s) fs)))))
 
+
 #?(:cljs
-   (def
-     ^{:private true
-       :doc "Tokenizer used during stylesheet compression."}
+   (def ^{:private true
+          :doc "Tokenizer used during stylesheet compression."}
      stylesheet-tokenizer
      (tokenizer
-      ;; String literals
-      [:string #"^\"(?:\\.|[^\"])*\""]
-      ;; Delimiters
-      [:r-brace #"^\s*\{\s*"]
-      [:l-brace #"^;?\s*}"]
-      [:r-paren #"^\s*\(\s*"]
-      [:l-paren #"^\s*\)"]
-      [:comma #"^,\s*"]
-      [:colon #"^:\s*"]
-      [:semicolon #"^;"]
-      ;; White space
-      [:and #"^and\s+"]
-      [:space+ #"^ +"]
-      [:white-space+ #"^\s+"]
-      ;; Everything else
-      [:any #"^."])))
+       ;; String literals
+       [:string #"^\"(?:\\.|[^\"])*\""]
+       ;; Delimiters
+       [:r-brace #"^\s*\{\s*"]
+       [:l-brace #"^;?\s*}"]
+       [:r-paren #"^\s*\(\s*"]
+       [:l-paren #"^\s*\)"]
+       [:comma #"^,\s*"]
+       [:colon #"^:\s*"]
+       [:semicolon #"^;"]
+       ;; White space
+       [:and #"^and\s+"]
+       [:space+ #"^ +"]
+       [:white-space+ #"^\s+"]
+       ;; Everything else
+       [:any #"^."])))
+
 
 #?(:cljs
    (defn compress-stylesheet

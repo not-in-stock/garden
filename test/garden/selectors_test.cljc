@@ -1,8 +1,9 @@
 (ns garden.selectors-test
   (:require
-   #?(:cljs [cljs.test :as t :refer-macros [is are deftest testing]]
-      :clj  [clojure.test :as t :refer [is are deftest testing]])
-   [garden.selectors :as s]))
+    #?(:cljs [cljs.test :as t :refer-macros [is are deftest testing]]
+       :clj  [clojure.test :as t :refer [is are deftest testing]])
+    [garden.selectors :as s]))
+
 
 (deftest selector-test
   (testing "selector?"
@@ -30,6 +31,7 @@
       (s/attr :foo := "'bar'") "[foo='bar']"
       (s/descendant s/ul s/li) "ul li"
       (s/descendant s/ul (s/+ s/ol s/li)) "ul ol + li")))
+
 
 (deftest specificity-test
   (testing "specificity"

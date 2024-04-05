@@ -1,9 +1,10 @@
 (ns user
   (:require
-    cljs.repl
-    cljs.build.api
-    cljs.repl.node
-    cljs.repl.browser))
+    [cljs.build.api]
+    [cljs.repl]
+    [cljs.repl.browser]
+    [cljs.repl.node]))
+
 
 (defn build
   ([& options]
@@ -12,25 +13,29 @@
    (let [start (System/nanoTime)]
      (println "setting main as: " 'garden)
      (cljs.build.api/build "src"
-              {:main 'garden
-               :output-to "target/build/garden.js"
-               :output-dir "target/build"
-               :optimizations :none
-               :source-map true
-               :verbose true})
+                           {:main 'garden
+                            :output-to "target/build/garden.js"
+                            :output-dir "target/build"
+                            :optimizations :none
+                            :source-map true
+                            :verbose true})
      (println "... done. Elapsed" (/ (- (System/nanoTime) start) 1e9) "seconds"))))
 
-(defn repl [main env & dirs]
+
+(defn repl
+  [main env & dirs]
   (cljs.build.api/build "src"
-    {:main       main
-     :output-to  "target/garden.js"
-     :output-dir "target/dev"
-     :warnings   {:single-segment-namespace false}
-     :verbose    true})
+                        {:main       main
+                         :output-to  "target/garden.js"
+                         :output-dir "target/dev"
+                         :warnings   {:single-segment-namespace false}
+                         :verbose    true})
 
   (cljs.repl/repl* env
-    {:watch "src"
-     :output-dir "target/dev"}))
+                   {:watch "src"
+                    :output-dir "target/dev"}))
 
-(defn node-repl []
+
+(defn node-repl
+  []
   (repl 'garden (cljs.repl.node/repl-env)))

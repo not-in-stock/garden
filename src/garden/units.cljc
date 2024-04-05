@@ -2,69 +2,81 @@
   "Functions and macros for working with CSS units."
   (:refer-clojure :exclude [rem])
   #?@(:clj
-     [(:require
-       [garden.types :as types]
-       [garden.util :as util])
-      (:import
-       [garden.types CSSUnit])])
+      [(:require
+         [garden.types :as types]
+         [garden.util :as util])
+       (:import
+         [garden.types CSSUnit])])
   #?@(:cljs
       [(:require
-        [cljs.reader :refer [read-string]]
-        [garden.types :as types :refer [CSSUnit]]
-        [garden.util :as util])
+         [cljs.reader :refer [read-string]]
+         [garden.types :as types :refer [CSSUnit]]
+         [garden.util :as util])
        (:require-macros
-        [garden.units :refer [defunit]])]))
+         [garden.units :refer [defunit]])]))
 
-;;;; ## Unit families
+
+;; ## Unit families
 
 (def length-units
   #{:in :cm :pc :mm :pt :px (keyword "%")})
 
+
 (def angular-units
   #{:deg :grad :rad :turn})
+
 
 (def time-units
   #{:s :ms})
 
+
 (def frequency-units
   #{:Hz :kHz})
+
 
 (def resolution-units
   #{:dpi :dpcm :dppx})
 
-;;;; ## Unit predicates
+
+;; ## Unit predicates
 
 (defn unit?
   "True if x is of type CSSUnit."
   [x]
   (instance? CSSUnit x))
 
+
 (defn length?
   [x]
   (and (unit? x)
        (contains? length-units (:unit x))))
+
 
 (defn angle?
   [x]
   (and (unit? x)
        (contains? angular-units (:unit x))))
 
+
 (defn time?
   [x]
   (and (unit? x)
        (contains? time-units (:unit x))))
+
 
 (defn frequency?
   [x]
   (and (unit? x)
        (contains? frequency-units (:unit x))))
 
+
 (defn resolution?
   [x]
   (and (unit? x)
        (contains? resolution-units (:unit x))))
 
-;;;; ## Unit conversion
+
+;; ## Unit conversion
 
 (def ^{:private true
        :doc "Map associating CSS unit types to their conversion values."}
@@ -119,10 +131,12 @@
         :kHz 0.001}
    :kHz {:kHz 1}})
 
+
 (defn- convertable?
   "True if unit is a key of convertable-units, false otherwise."
   [unit]
   (contains? conversions unit))
+
 
 (defn- convert
   "Convert a Unit with :unit left to a Unit with :unit right if possible."
@@ -137,22 +151,24 @@
         v2
         (CSSUnit. right (/ m v2))
 
-       ;; Both units are convertible but no conversion between them exists.
-       :else
-       (throw
-        (ex-info
-         (util/format "Can't convert %s to %s" (name left) (name right)) {}))))
+        ;; Both units are convertible but no conversion between them exists.
+        :else
+        (throw
+          (ex-info
+            (util/format "Can't convert %s to %s" (name left) (name right)) {}))))
     ;; Display the inconvertible unit.
     (let [x (first (drop-while convertable? [left right]))]
       (throw (ex-info (str "Inconvertible unit " (name x)) {})))))
 
-;;;; ## Unit helpers
+
+;; ## Unit helpers
 
 (def ^{:doc "Regular expression for matching a CSS unit. The magnitude
              and unit are captured."
        :private true}
   unit-re
   #"([+-]?\d+(?:\.?\d+)?)(p[xtc]|in|[cm]m|%|r?em|ex|ch|v(?:[wh]|m(?:in|ax))|fr|deg|g?rad|turn|m?s|k?Hz|dp(?:i|cm|px))")
+
 
 (defn read-unit
   "Read a `CSSUnit` object from the string `s`."
@@ -162,10 +178,12 @@
           magnitude (if magnitude (read-string magnitude) 0)]
       (CSSUnit. unit magnitude))))
 
+
 (defn make-unit-predicate
   "Creates a function for verifying the given unit type."
   [unit]
   (fn [x] (and (unit? x) (= (:unit x) unit))))
+
 
 (defn make-unit-fn
   "Creates a function for creating and converting `CSSUnit`s for the
@@ -190,7 +208,8 @@
             ex-data {:given {:x x
                              :unit unit}}]
         (throw
-         (ex-info ex-message ex-data))))))
+          (ex-info ex-message ex-data))))))
+
 
 (defn make-unit-adder
   "Create a addition function for adding Units."
@@ -200,11 +219,12 @@
       ([] (u 0))
       ([x] (u x))
       ([x y]
-         (let [{m1 :magnitude} (u x)
-               {m2 :magnitude} (u y)]
-           (u (+ m1 m2))))
+       (let [{m1 :magnitude} (u x)
+             {m2 :magnitude} (u y)]
+         (u (+ m1 m2))))
       ([x y & more]
-         (reduce u+ (u+ x y) more)))))
+       (reduce u+ (u+ x y) more)))))
+
 
 (defn make-unit-subtractor
   "Create a subtraction function for subtracting Units."
@@ -213,48 +233,51 @@
     (fn u-
       ([x] (u (- x)))
       ([x y]
-         (let [{m1 :magnitude} (u x)
-               {m2 :magnitude} (u y)]
-           (u (- m1 m2))))
+       (let [{m1 :magnitude} (u x)
+             {m2 :magnitude} (u y)]
+         (u (- m1 m2))))
       ([x y & more]
-         (reduce u- (u- x y) more)))))
+       (reduce u- (u- x y) more)))))
+
 
 (defn make-unit-multiplier
   "Create a multiplication function for multiplying Units."
   [unit]
   (let [u  (make-unit-fn unit)
         op (if (= unit :%)
-            (fn percent*
-              [x y]
-              (/ (* x y) 100))
-            *)]
+             (fn percent*
+               [x y]
+               (/ (* x y) 100))
+             *)]
     (fn u*
       ([] (u 1))
       ([x] (u x))
       ([x y]
-         (let [{m1 :magnitude} (u x)
-               {m2 :magnitude} (u y)]
-           (u (op m1 m2))))
+       (let [{m1 :magnitude} (u x)
+             {m2 :magnitude} (u y)]
+         (u (op m1 m2))))
       ([x y & more]
-         (reduce u* (u* x y) more)))))
+       (reduce u* (u* x y) more)))))
+
 
 (defn make-unit-divider
   "Create a division function for dividing Units."
   [unit]
   (let [u (make-unit-fn unit)
         op (if (= unit :%)
-            (fn percent-div
-              [x y]
-              (* 100 (/ x y)))
+             (fn percent-div
+               [x y]
+               (* 100 (/ x y)))
              /)]
     (fn ud
       ([x] (u (/ 1 x)))
       ([x y]
-         (let [{m1 :magnitude} (u x)
-               {m2 :magnitude} (u y)]
-           (u (op m1 m2))))
+       (let [{m1 :magnitude} (u x)
+             {m2 :magnitude} (u y)]
+         (u (op m1 m2))))
       ([x y & more]
-         (reduce ud (ud x y) more)))))
+       (reduce ud (ud x y) more)))))
+
 
 #?(:clj
    (defmacro defunit
@@ -273,6 +296,7 @@
            (def ~(append \*) (make-unit-multiplier ~k))
            (def ~(append "-div") (make-unit-divider ~k)))))))
 
+
 (comment
   ;; This:
   (defunit px)
@@ -283,6 +307,7 @@
   (def px- (make-unit-subtractor :px))
   (def px* (make-unit-multiplier :px))
   (def px-div (make-unit-divider :px)))
+
 
 ;; # Predefined units
 
@@ -296,12 +321,14 @@
 (defunit pc)
 (defunit percent "%")
 
+
 ;; Font-relative units
 
 (defunit em)
 (defunit ex)
 (defunit ch)
 (defunit rem)
+
 
 ;; Viewport-percentage lengths
 
@@ -310,9 +337,11 @@
 (defunit vmin)
 (defunit vmax)
 
+
 ;; Grid track length
 
 (defunit fr)
+
 
 ;; Angles
 
@@ -321,15 +350,18 @@
 (defunit rad)
 (defunit turn)
 
+
 ;; Times
 
 (defunit s)
 (defunit ms)
 
+
 ;; Frequencies
 
 (defunit Hz)
 (defunit kHz)
+
 
 ;; Resolutions
 

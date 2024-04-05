@@ -1,14 +1,16 @@
 (ns garden.units-test
   (:refer-clojure :exclude [rem])
   (:require
-   #?(:clj  [clojure.test :as t :refer [is are deftest testing]]
-      :cljs [cljs.test :as t :refer-macros [is are deftest testing]])
-   #?(:clj  [garden.types :as types]
-      :cljs [garden.types :as types :refer [CSSUnit]])
-   [garden.units :as units])
+    #?(:clj  [clojure.test :as t :refer [is are deftest testing]]
+       :cljs [cljs.test :as t :refer-macros [is are deftest testing]])
+    #?(:clj  [garden.types :as types]
+       :cljs [garden.types :as types :refer [CSSUnit]])
+    [garden.units :as units])
   #?(:clj
-     (:import garden.types.CSSUnit
-              clojure.lang.ExceptionInfo)))
+     (:import
+       clojure.lang.ExceptionInfo
+       garden.types.CSSUnit)))
+
 
 (deftest test-unit-arthimetic
   (let [μm (units/make-unit-fn :μm)
@@ -31,6 +33,7 @@
       #?(:clj
          (is (thrown? ArithmeticException (μm-div 2 0)))))))
 
+
 (deftest test-%-arthimetic
   (let [u% (units/make-unit-fn :%)
         u%+ (units/make-unit-adder :%)
@@ -51,6 +54,7 @@
       (is (= (u% 50) (u%-div 1 2)))
       #?(:clj
          (is (thrown? ArithmeticException (u%-div 2 0)))))))
+
 
 (deftest test-px
   (testing "px checking"
@@ -85,6 +89,7 @@
     (is (thrown? ExceptionInfo (units/px (units/ms 1))))
     (is (thrown? ExceptionInfo (units/px (units/Hz 1))))
     (is (thrown? ExceptionInfo (units/px (units/kHz 1))))))
+
 
 (deftest unit-utils
   (testing "read-unit"
